@@ -62,6 +62,7 @@ RNF7: Gestión de Versiones: El código fuente y la documentación deben estar a
 5. Requerimientos técnicos
 
 Para cumplir con los estándares de calidad, se han utilizado las siguientes herramientas:
+
 ●	Spring Data jpa: Para el acceso de datos.
 ●	Lombok y récords: Para reducir el código repetitivo y asegurar la inmutabilidad de los Dtos
 ●	 ResponseEntity: Para estandarizar las respuestas HTTP y el manejo de errores.
@@ -74,6 +75,7 @@ HU-01: Registro de Inventario (Libro-Service)
 ●	Historia: Como administrador de la biblioteca, quisiera registrar nuevos libros en el sistema, para mantener el catálogo actualizado.
 
 ●	Criterios de aceptación:
+
 -	Se debe utilizar una entidad “Libro” con soporte de lombok para los campos: título, autor y disponibilidad.
 -	La persistencia debe realizarse en PostgreSQL mediante el uso de interfaces de repositorio.
 -	La respuesta debe ser un ResponseEntity con el código HTTP 201
@@ -82,9 +84,11 @@ HU-02: Búsqueda Filtrada de Libros (Libro-Service)
 
 ●	Historia: Como usuario de la biblioteca, quiero buscar libros por autor o género utilizando filtros, para encontrar rápidamente el material que necesito.
 ●	Criterios de Aceptación:
+
 ○	El controlador debe recibir los criterios a través de Query Params.
 ○	El servicio debe devolver una lista de LibroDTO utilizando el formato récord de Java.
 ○	Si no hay resultados, debe retornar un código 200 con una lista vacía.
+
 HU-03: Validación de Disponibilidad (Comunicación Inter-service)
 
 ●	Historia: Como sistema de préstamos, quiero consultar el estado de un libro en el servicio de inventario antes de procesar una solicitud, para evitar prestar libros que ya no están disponibles.
