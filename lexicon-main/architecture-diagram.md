@@ -4,13 +4,12 @@
 
 Este diagrama muestra los contenedores principales del sistema y cómo se comunican.
 
-```mermaid
 flowchart TB
   %% Actor
   Usuario[(Usuario)]
 
   %% Libro-Service
-  subgraph LibroService [Libro-Service (Puerto 3333)]
+  subgraph LibroService ["Libro-Service (Puerto 3333)"]
     direction TB
     LibroApi["Libro API\n(Spring Boot)"]
     LibroServiceComp["LibroService\n(Lógica de negocio)" ]
@@ -23,7 +22,7 @@ flowchart TB
   end
 
   %% Prestamo-Service
-  subgraph PrestamoService [Prestamo-Service (Puerto 3334)]
+  subgraph PrestamoService ["Prestamo-Service (Puerto 3334)"]
     direction TB
     AuthApi["Auth API\n(Spring Boot)" ]
     PrestamoApi["Prestamo API\n(Spring Boot)" ]
@@ -50,7 +49,7 @@ flowchart TB
   %% Dependencias externas
   Usuario -->|Registra/Inicia sesión| AuthApi
   Usuario -->|Solicita préstamos| PrestamoApi
-```
+
 
 ## Explicación C2
 
