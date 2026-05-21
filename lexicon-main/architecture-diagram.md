@@ -10,7 +10,7 @@ flowchart TB
   Usuario[(Usuario)]
 
   %% Libro-Service 
-  subgraph LibroService ["Libro-Service (Puerto 3333)"] 
+  subgraph LibroService ["Libro-Service - Puerto 3333"] 
     direction TB 
     LibroApi["Libro API\n(Spring Boot)"] 
     LibroServiceComp["LibroService\n(Lógica de negocio)"] 
