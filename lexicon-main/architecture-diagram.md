@@ -5,54 +5,64 @@
 Este diagrama muestra los contenedores principales del sistema y cómo se comunican.
 
 ```mermaid
-flowchart TB 
-  %% Actor 
+flowchart TB
+
+  %% Actor
   Usuario[(Usuario)]
 
-  %% Libro-Service 
-  subgraph LibroService ["Libro-Service - Puerto 3333"] 
-    direction TB 
-    LibroApi["Libro API\n(Spring Boot)"] 
-    LibroServiceComp["LibroService\n(Lógica de negocio)"] 
-    LibroRepo["LibroRepository\n(JPA)"] 
-    LibroDB[(PostgreSQL\nlibro_db)] 
-    
-    LibroApi --> LibroServiceComp 
-    LibroServiceComp --> LibroRepo 
-    LibroRepo --> LibroDB 
+  %% Libro-Service
+  subgraph LibroService["Libro-Service - Puerto 3333"]
+
+    LibroApi["Libro API<br/>Spring Boot"]
+    LibroServiceComp["LibroService<br/>Lógica de negocio"]
+    LibroRepo["LibroRepository<br/>JPA"]
+    LibroDB[("PostgreSQL<br/>libro_db")]
+
+    LibroApi --> LibroServiceComp
+    LibroServiceComp --> LibroRepo
+    LibroRepo --> LibroDB
+
   end
 
-  %% Prestamo-Service 
-  subgraph PrestamoService ["Prestamo-Service (Puerto 3334)"] 
-    direction TB 
-    AuthApi["Auth API\n(Spring Boot)"] 
-    PrestamoApi["Prestamo API\n(Spring Boot)"] 
-    AuthServiceComp["AuthService\n(Registro, login, JWT)"] 
-    PrestamoServiceComp["PrestamoService\n(Lógica de préstamos)"] 
-    UserRepo["UserRepository\n(JPA)"] 
-    PrestamoRepo["PrestamoRepository\n(JPA)"] 
-    PrestamoDB[(PostgreSQL\nprestamo_db)] 
-    JwtFilter["JwtAuthenticationFilter\n(Spring Security)"] 
-    LibroClient["LibroServiceClientImpl\n(RestClient)"] 
+  %% Prestamo-Service
+  subgraph PrestamoService["Prestamo-Service - Puerto 3334"]
 
-    PrestamoApi --> PrestamoServiceComp 
-    PrestamoApi --> JwtFilter 
-    PrestamoServiceComp --> PrestamoRepo 
-    PrestamoServiceComp --> LibroClient 
-    AuthApi --> AuthServiceComp 
-    AuthServiceComp --> UserRepo 
-    PrestamoRepo --> PrestamoDB 
-    UserRepo --> PrestamoDB 
+    AuthApi["Auth API<br/>Spring Boot"]
+    PrestamoApi["Prestamo API<br/>Spring Boot"]
+
+    AuthServiceComp["AuthService<br/>Registro, login, JWT"]
+    PrestamoServiceComp["PrestamoService<br/>Lógica de préstamos"]
+
+    UserRepo["UserRepository<br/>JPA"]
+    PrestamoRepo["PrestamoRepository<br/>JPA"]
+
+    PrestamoDB[("PostgreSQL<br/>prestamo_db")]
+
+    JwtFilter["JwtAuthenticationFilter<br/>Spring Security"]
+    LibroClient["LibroServiceClientImpl<br/>RestClient"]
+
+    PrestamoApi --> PrestamoServiceComp
+    PrestamoApi --> JwtFilter
+
+    PrestamoServiceComp --> PrestamoRepo
+    PrestamoServiceComp --> LibroClient
+
+    AuthApi --> AuthServiceComp
+    AuthServiceComp --> UserRepo
+
+    PrestamoRepo --> PrestamoDB
+    UserRepo --> PrestamoDB
+
   end
 
-  %% Relaciones e interacciones del Usuario y Servicios
+  %% Relaciones
   Usuario -->|HTTP/JSON| LibroApi
   Usuario -->|HTTP/JSON + JWT| PrestamoApi
-  Usuario -->|Registra/Inicia sesión| AuthApi 
-  Usuario -->|Solicita préstamos| PrestamoApi 
+  Usuario -->|Registra/Inicia sesión| AuthApi
+  Usuario -->|Solicita préstamos| PrestamoApi
+
   LibroClient -->|HTTP/JSON| LibroApi
 ```
-
 ## Explicación C2
 
 - `Usuario` es el actor externo que consume los servicios via HTTP.
