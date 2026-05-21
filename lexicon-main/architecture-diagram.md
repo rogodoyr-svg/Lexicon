@@ -1,4 +1,4 @@
-# Arquitectura de Lexicon
+  # Arquitectura de Lexicon
 
 ## Diagrama C2 - Contenedores
 
@@ -51,7 +51,7 @@ flowchart TB
   Usuario -->|Registra/Inicia sesión| AuthApi 
   Usuario -->|Solicita préstamos| PrestamoApi 
   LibroClient -->|HTTP/JSON| LibroApi
-
+```
 
 ## Explicación C2
 
