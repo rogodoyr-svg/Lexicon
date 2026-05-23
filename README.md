@@ -1,98 +1,156 @@
-------------------------------------Sistema de gestión de biblioteca "Lexicón"----------------------------
+# Lexicon - Sistema de Gestion de Biblioteca
 
-1. Contexto del caso:
+## Contexto del Proyecto
 
-La Biblioteca Central enfrenta un problema de saturación en su sistema actual. Al ser un sistema monolítico antiguo, cada vez que el departamento de inventario carga nuevos libros, el sistema de préstamos se vuelve lento, afectando la experiencia del usuario final. Además, existe una falta de sincronización real: se prestan libros que el sistema reporta como "disponibles" pero que físicamente ya han salido, generando reclamos y desorden administrativo.
+La Biblioteca Central enfrenta un problema de saturacion en su sistema actual. Al ser un sistema monolitico antiguo, cada vez que el departamento de inventario carga nuevos libros, el sistema de prestamos se vuelve lento, afectando la experiencia del usuario final. Ademas, existe una falta de sincronizacion real: se prestan libros que el sistema reporta como "disponibles" pero que fisicamente ya han salido, generando reclamos y desorden administrativo.
 
---------------------------------------------------------------------------------------------------
+## Propuesta (MVP)
 
-2. Introducción:
+La solucion se basa en **dos microservicios independientes** que se comunican de forma sincrona para validar las reglas de negocio en tiempo real.
 
-El proyecto Lexicon nace como una propuesta de transformación digital para desacoplar las operaciones de la biblioteca. El objetivo es separar la gestión de activos (Libros) de la gestión transaccional (Préstamos).
+---
 
-Al implementar microservicios, garantizamos que el catálogo pueda ser consultado masivamente sin interrumpir el proceso crítico de registro de préstamos, asegurando la alta disponibilidad y la integridad de los datos.
+## Arquitectura
 
--------------------------------------------------------------------------------------------------------
+```
++------------------+          +---------------------+
+|   Libro-Service  | <------  |  Prestamo-Service   |
+|   (Inventario)   |  REST    |  (Operaciones)      |
+|   Puerto: 3333   |          |  Puerto: 3334       |
++------------------+          +---------------------+
+       |                              |
+  PostgreSQL:5433              PostgreSQL:5434
+  (libro_db)                   (prestamo_db)
+```
 
-3. Propuesta (MVP)
+---
 
-La solución para este caso se basa en dos microservicios independientes que se comunican de forma síncrona para así validar las reglas de negocios en tiempo real.
+## Componentes
 
-Componentes de la solución:
+### 1. Libro-Service (Inventario) - Puerto 3333
 
-* Libro-Service (Inventario): Gestiona el catálogo de libros. Expone endpoints para búsqueda filtrada mediante Query Params (autor, género) y permite actualizar el estado de disponibilidad.
+Gestiona el catalogo de libros. Expone endpoints para busqueda filtrada mediante Query Params (autor, genero) y permite actualizar el estado de disponibilidad.
 
-* Préstamo-Service (Operaciones): Orquesta el proceso de préstamo. Antes de registrar un préstamo, consulta al Libro-Service para verificar la existencia y estado del ejemplar.
+**Endpoints principales:**
+- `GET /api/libros` - Listar todos los libros (con filtros: `?autor=X&genero=Y`)
+- `GET /api/libros/disponibles` - Listar solo libros disponibles
+- `GET /api/libros/{id}` - Obtener libro por ID
+- `GET /api/libros/isbn/{isbn}` - Obtener libro por ISBN
+- `POST /api/libros` - Crear nuevo libro
+- `PUT /api/libros/{id}` - Actualizar libro
+- `DELETE /api/libros/{id}` - Eliminar libro
+- `PATCH /api/libros/{id}/disponibilidad?disponible=false` - Cambiar disponibilidad
+- `GET /api/libros/{id}/disponibilidad` - Verificar disponibilidad
 
-* Base de Datos Relacional: Cada servicio cuenta con su propia persistencia en PostgreSQL, gestionada mediante migraciones de Flyway para asegurar que el esquema sea reproducible en cualquier entorno.
+### 2. Prestamo-Service (Operaciones) - Puerto 3334
 
-------------------------------------------------------------------------------------------------------------
-4. Requisitos no funcionales y funcionales
+Orquesta el proceso de prestamo. Antes de registrar un prestamo, consulta al Libro-Service para verificar la existencia y estado del ejemplar.
 
-●	Requisitos Funcionales
+**Auth endpoints:**
+- `POST /api/auth/register` - Registrar usuario
+- `POST /api/auth/login` - Iniciar sesion (devuelve JWT)
+- `GET /api/auth/validate` - Validar token JWT
 
-RF1: Gestión de Inventario: El sistema debe permitir el registro y almacenamiento de libros con atributos de título, autor y estado de disponibilidad en una base de datos PostgreSQL.
+**Prestamo endpoints (requieren JWT):**
+- `GET /api/prestamos` - Listar todos los prestamos
+- `GET /api/prestamos/usuario` - Listar prestamos del usuario autenticado
+- `GET /api/prestamos/estado?estado=ACTIVO` - Filtrar por estado
+- `GET /api/prestamos/{id}` - Obtener prestamo por ID
+- `POST /api/prestamos` - Registrar nuevo prestamo
+- `POST /api/prestamos/{id}/devolucion` - Registrar devolucion
 
-RF2: Búsqueda Filtrada: El sistema debe permitir la consulta de libros utilizando filtros específicos (autor, género) enviados a través de Query Params.
+---
 
-RF3: Validación de Préstamos: El Préstamo-Service debe consultar al Libro-Service para verificar si un libro existe y si su estado es "disponible" antes de procesar una transacción.
-RF4: Actualización de Disponibilidad: Una vez registrado un préstamo, el sistema debe actualizar automáticamente el estado del libro en el microservicio de inventario para evitar duplicidad de préstamos.
+## Tecnologias
 
-RF5: Control de Usuarios: El sistema debe gestionar el registro de qué usuario tiene asignado cada libro.
+- **Java 25** con **Spring Boot 4.0.6**
+- **PostgreSQL 16** (Docker)
+- **Flyway** para migraciones de base de datos
+- **Spring Security** + **JWT** (jjwt 0.11.5) para autenticacion
+- **Lombok** para reduccion de codigo repetitivo
+- **Gradle** como sistema de build
+- **RestClient** para comunicacion sincrona entre servicios
 
+---
 
-●	Requisitos no funcionales:
+## Inicio Rapido
 
-RNF1: Arquitectura de Microservicios: El sistema debe estar desacoplado en dos servicios independientes (Libros y Préstamos) para asegurar la alta disponibilidad y escalabilidad.
-RNF2: Tecnologías Base: El desarrollo debe realizarse utilizando Java 25 y Spring Boot 4.
-RNF3: Persistencia y Evolución de Datos: Se debe utilizar PostgreSQL como base de datos relacional y Flyway para el control de versiones y migraciones del esquema.
+### 1. Levantar las bases de datos
 
-RNF4: Comunicación Inter-service: La comunicación entre los microservicios debe ser síncrona, utilizando RestTemplate o WebClient.
+```bash
+docker-compose up -d
+```
 
-RNF5: Estándares de Código:
-●	Uso de Lombok para reducir código repetitivo (getters/setters) y Records para la inmutabilidad de los DTOs.
+### 2. Iniciar Libro-Service
 
-●	Implementación de servicios basada en interfaces (IMPL) para cumplir con el principio de inversión de dependencias.
+```bash
+cd libro-service
+./gradlew bootRun
+```
 
-RNF6: Respuestas HTTP Estándar: El sistema debe utilizar ResponseEntity para estandarizar las respuestas y el manejo de errores hacia el cliente.
-RNF7: Gestión de Versiones: El código fuente y la documentación deben estar alojados en un repositorio de GitHub con un archivo README detallado.
+### 3. Iniciar Prestamo-Service
 
-------------------------------------------------------------------------------------------------------------------------------------
+```bash
+cd prestamo-service
+./gradlew bootRun
+```
 
-5. Requerimientos técnicos
+### 4. Probar con los archivos `.http`
 
-Para cumplir con los estándares de calidad, se han utilizado las siguientes herramientas:
+Los archivos `api.http` de cada servicio contienen todas las peticiones de ejemplo listas para ejecutar en IntelliJ IDEA o VS Code con la extension REST Client.
 
-●	Spring Data jpa: Para el acceso de datos.
-●	Lombok y récords: Para reducir el código repetitivo y asegurar la inmutabilidad de los Dtos
-●	 ResponseEntity: Para estandarizar las respuestas HTTP y el manejo de errores.
-●	Interfaces "IMPL": Aplicando el principio de inversión de dependencias para asi poder facilitar las pruebas.
+---
 
-Backlog de historias de usuarios (MVP)
+## Ejemplo de Flujo Completo
 
-HU-01: Registro de Inventario (Libro-Service) 
+```
+1. Registrar usuario:
+   POST /api/auth/register  { "username": "juan", "password": "1234" }
 
-●	Historia: Como administrador de la biblioteca, quisiera registrar nuevos libros en el sistema, para mantener el catálogo actualizado.
+2. Iniciar sesion:
+   POST /api/auth/login     { "username": "juan", "password": "1234" }
+   -> Obtiene JWT token
 
-●	Criterios de aceptación:
+3. Crear libro (Libro-Service):
+   POST /api/libros         { "titulo": "Don Quijote", "autor": "Cervantes", "genero": "Clasico", "isbn": "978-1-23-456789-7" }
 
--	Se debe utilizar una entidad “Libro” con soporte de lombok para los campos: título, autor y disponibilidad.
--	La persistencia debe realizarse en PostgreSQL mediante el uso de interfaces de repositorio.
--	La respuesta debe ser un ResponseEntity con el código HTTP 201
+4. Registrar prestamo (Prestamo-Service con JWT):
+   POST /api/prestamos      { "libroId": "<uuid>" }
+   -> Verifica disponibilidad via Libro-Service
+   -> Registra prestamo
+   -> Actualiza disponibilidad a false
 
-HU-02: Búsqueda Filtrada de Libros (Libro-Service)
+5. Devolver libro:
+   POST /api/prestamos/<id>/devolucion
+   -> Actualiza estado a DEVUELTO
+   -> Actualiza disponibilidad a true en Libro-Service
+```
 
-●	Historia: Como usuario de la biblioteca, quiero buscar libros por autor o género utilizando filtros, para encontrar rápidamente el material que necesito.
-●	Criterios de Aceptación:
+---
 
-○	El controlador debe recibir los criterios a través de Query Params.
-○	El servicio debe devolver una lista de LibroDTO utilizando el formato récord de Java.
-○	Si no hay resultados, debe retornar un código 200 con una lista vacía.
+## Base de Datos
 
-HU-03: Validación de Disponibilidad (Comunicación Inter-service)
+Cada servicio cuenta con su propia persistencia en PostgreSQL, gestionada mediante migraciones de Flyway para asegurar que el esquema sea reproducible en cualquier entorno.
 
-●	Historia: Como sistema de préstamos, quiero consultar el estado de un libro en el servicio de inventario antes de procesar una solicitud, para evitar prestar libros que ya no están disponibles.
-●	Criterios de Aceptación:
-○	El Préstamo-Service debe comunicarse de forma síncrona con el Libro-Service usando RestTemplate o WebClient.
-○	Se debe validar la existencia y el campo disponible del libro en tiempo real.
-○	En caso de que el libro no exista, se debe retornar un error 404 manejado a través de ResponseEntity.
+### Libro-Service (libro_db)
+- Tabla `libros`: id, titulo, autor, genero, isbn, disponible, created_at, updated_at
+- Indices en: autor, genero, isbn, disponible
+
+### Prestamo-Service (prestamo_db)
+- Tabla `users`: id, username, password_hash, created_at, updated_at
+- Tabla `prestamos`: id, libro_id, usuario_username, fecha_prestamo, fecha_devolucion, estado, created_at, updated_at
+- Indices en: usuario, estado, libro_id
+
+---
+
+## Tests
+
+Ambos servicios incluyen tests unitarios e integracion:
+
+```bash
+cd libro-service
+./gradlew test
+
+cd prestamo-service
+./gradlew test
+```
