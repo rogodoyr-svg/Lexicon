@@ -51,7 +51,7 @@ public class AuthController {
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new ValidationException("Missing or invalid Authorization header");
+            throw new ValidationException("Cabecera de autorización ausente o inválida");
         }
 
         String token = authHeader.substring(7);

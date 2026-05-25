@@ -53,7 +53,7 @@ public class PrestamoService {
 
     @Transactional
     public PrestamoDto registrarPrestamo(String username, PrestamoRequestDto request) {
-        // Verify book exists and is available via Libro-Service
+        // Verificar que el libro exista y esté disponible a través de Libro-Service
         LibroDto libro;
         try {
             libro = libroServiceClient.getLibroById(request.libroId());
@@ -65,13 +65,13 @@ public class PrestamoService {
             throw new ValidationException("El libro '" + libro.titulo() + "' no se encuentra disponible para prestamo");
         }
 
-        // Check if user already has an active loan for this book
+        // Comprobar si el usuario ya tiene un préstamo activo de este libro
         prestamoRepository.findByLibroIdAndEstado(request.libroId(), "ACTIVO")
                 .ifPresent(p -> {
                     throw new ValidationException("Ya existe un prestamo activo para este libro");
                 });
 
-        // Register the loan
+        // Registrar el préstamo
         Prestamo prestamo = Prestamo.builder()
                 .libroId(request.libroId())
                 .usuarioUsername(username)
@@ -81,7 +81,7 @@ public class PrestamoService {
 
         prestamoRepository.save(prestamo);
 
-        // Update book availability in Libro-Service
+        // Actualizar la disponibilidad del libro en Libro-Service
         libroServiceClient.actualizarDisponibilidad(request.libroId(), false);
 
         return toDto(prestamo);
@@ -100,7 +100,7 @@ public class PrestamoService {
         prestamo.setFechaDevolucion(LocalDateTime.now());
         prestamoRepository.save(prestamo);
 
-        // Update book availability in Libro-Service
+        // Actualizar la disponibilidad del libro en Libro-Service
         libroServiceClient.actualizarDisponibilidad(prestamo.getLibroId(), true);
 
         return toDto(prestamo);
@@ -145,7 +145,7 @@ public class PrestamoService {
             try {
                 libroServiceClient.actualizarDisponibilidad(prestamo.getLibroId(), true);
             } catch (Exception e) {
-                // Ignore exception if book update fails during deletion
+                // Ignorar error si falla la actualización del libro al eliminar
             }
         }
 

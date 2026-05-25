@@ -28,14 +28,14 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByUsername(request.username()).isPresent()) {
-            throw new ValidationException("Username already exists");
+            throw new ValidationException("El nombre de usuario ya existe");
         }
 
         if (request.username() == null || request.username().isBlank()) {
-            throw new ValidationException("Username cannot be empty");
+            throw new ValidationException("El nombre de usuario no puede estar vacío");
         }
         if (request.password() == null || request.password().isBlank()) {
-            throw new ValidationException("Password cannot be empty");
+            throw new ValidationException("La contraseña no puede estar vacía");
         }
 
         String passwordHash = passwordEncoder.encode(request.password());
@@ -54,17 +54,17 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         if (request.username() == null || request.username().isBlank()) {
-            throw new ValidationException("Username cannot be empty");
+            throw new ValidationException("El nombre de usuario no puede estar vacío");
         }
         if (request.password() == null || request.password().isBlank()) {
-            throw new ValidationException("Password cannot be empty");
+            throw new ValidationException("La contraseña no puede estar vacía");
         }
 
         User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new AuthenticationException("Invalid username or password"));
+                .orElseThrow(() -> new AuthenticationException("Nombre de usuario o contraseña inválidos"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new AuthenticationException("Invalid username or password");
+            throw new AuthenticationException("Nombre de usuario o contraseña inválidos");
         }
 
         String token = jwtUtil.generateToken(user.getUsername());

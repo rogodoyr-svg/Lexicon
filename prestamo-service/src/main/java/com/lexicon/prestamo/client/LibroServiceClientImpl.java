@@ -36,7 +36,7 @@ public class LibroServiceClientImpl implements LibroServiceClient {
         if (status.is2xxSuccessful() && body != null && body.success() && body.data() != null) {
             return body.data();
         } else {
-            throw new RuntimeException("Failed to fetch libro: " + status);
+            throw new RuntimeException("Libro no conseguido: " + status);
         }
     }
 
@@ -52,7 +52,7 @@ public class LibroServiceClientImpl implements LibroServiceClient {
 
         HttpStatusCode status = response.getStatusCode();
         if (!status.is2xxSuccessful()) {
-            throw new RuntimeException("Failed to update libro availability: " + status);
+            throw new RuntimeException("No se actualizó la disponibilidad del libro: " + status);
         }
     }
 }
