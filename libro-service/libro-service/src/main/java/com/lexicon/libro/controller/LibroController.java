@@ -117,9 +117,9 @@ public class LibroController {
 
     //funcion para verificar la disponibilidad por id
     @GetMapping("/{id}/disponibilidad")
-    public String verificarDisponibilidad(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Boolean>> verificarDisponibilidad(@PathVariable UUID id) {
         boolean disponible = libroService.verificarDisponibilidad(id);
         ApiResponse<Boolean> response = new ApiResponse<>(true, disponible);
-        return ResponseEntity.ok(response) + "El libro con ID " + id + " está " + (disponible ? "disponible" : "no disponible") + ".";
+        return ResponseEntity.ok(response);
     }
 }

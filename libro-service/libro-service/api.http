@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:3333/api
-@libroId = 625e4082-1fd3-480d-8e4b-e41eb4506b9c
+@libroId = ee2efb5d-5894-4781-b94c-e6343e88b379
 
 ### =========================
 ### LIBRO-SERVICE ENDPOINTS
@@ -45,7 +45,7 @@ PUT {{baseUrl}}/libros/{{libroId}}
 Content-Type: application/json
 
 {
-  "titulo": "Cien Años de Soledad - Special Edition",
+  "titulo": "Cien Años de Soledad - Edicion Especial",
   "autor": "Gabriel Garcia Marquez",
   "genero": "Novela",
   "isbn": "978-3-16-148410-0"

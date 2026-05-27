@@ -12,7 +12,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
-@Component // Utilidad para generar y validar JWTs
+@Component
 public class JwtUtil {
 
     @Value("${jwt.secret}")
