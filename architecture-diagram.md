@@ -121,5 +121,4 @@ Cada microservicio:
 - Posee su **propia base de datos PostgreSQL** en un puerto único.
 - Puede desplegarse **sin dependencia** del otro (excepto Prestamo-Service que requiere Libro-Service en runtime).
 - Puede escalarse **independientemente** según demanda.
-- Usa el preview de Markdown o el soporte de Mermaid para visualizar el diagrama.
-- Si necesitas un diagrama C2 más detallado con componentes internos adicionales, puedo agregarlo.
+
