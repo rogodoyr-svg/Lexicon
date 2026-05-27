@@ -9,35 +9,35 @@
 GET {{baseUrl}}/libros
 
 ### Buscar libros por autor
-GET {{baseUrl}}/libros?autor=Garcia
+GET {{baseUrl}}/libros?autor=row
 
 ### Buscar libros por genero
-GET {{baseUrl}}/libros?genero=Novela
+GET {{baseUrl}}/libros?genero=novel
 
 ### Buscar libros por autor y genero
-GET {{baseUrl}}/libros?autor=Garcia&genero=Novela
+GET {{baseUrl}}/libros?autor=walter&genero=
 
 ### Obtener libros disponibles
 GET {{baseUrl}}/libros/disponibles
 
 ### Obtener libro por ID
-GET {{baseUrl}}/libros/{{libroId}}
+GET {{baseUrl}}/libros/92dc6258-fa8d-42e0-9e0e-931e2e3ccb43
 
 ### Obtener libro por ISBN
 GET {{baseUrl}}/libros/isbn/978-3-16-148410-0
 
 ### Verificar disponibilidad de un libro
-GET {{baseUrl}}/libros/{{libroId}}/disponibilidad
+GET {{baseUrl}}/libros/92dc6258-fa8d-42e0-9e0e-931e2e3ccb43/disponibilidad
 
 ### Crear un nuevo libro
 POST {{baseUrl}}/libros
 Content-Type: application/json
 
 {
-  "titulo": "Cien Años de Soledad",
-  "autor": "Gabriel Garcia Marquez",
-  "genero": "Novela",
-  "isbn": "978-3-16-148410-0"
+  "titulo": "Steve Jobs",
+  "autor": "Walter Isaacson",
+  "genero": "Biografía",
+  "isbn": "978-84-9992-129-7"
 }
 
 ### Actualizar un libro existente por id
