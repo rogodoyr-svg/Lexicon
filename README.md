@@ -12,6 +12,8 @@ La solucion se basa en **dos microservicios independientes** que se comunican de
 
 ## Arquitectura
 
+El sistema está compuesto por dos microservicios independientes, cada uno con su propio `docker-compose.yml` y su propia base de datos PostgreSQL.
+
 ```
 +------------------+          +---------------------+
 |   Libro-Service  | <------  |  Prestamo-Service   |
@@ -23,13 +25,18 @@ La solucion se basa en **dos microservicios independientes** que se comunican de
   (libro_db)                   (prestamo_db)
 ```
 
+- `libro-service/docker-compose.yml` define `postgresLibro` en el puerto local `5433`.
+- `prestamo-service/docker-compose.yml` define `postgresPrestamo` en el puerto local `5434`.
+- `Prestamo-Service` consume `Libro-Service` por REST para validar disponibilidad y actualizar estado.
+- Cada servicio es autónomo en su lógica y persistencia, lo que facilita el mantenimiento y el despliegue independiente.
+
 ---
 
 ## Componentes
 
 ### 1. Libro-Service (Inventario) - Puerto 3333
 
-Gestiona el catalogo de libros. Expone endpoints para busqueda filtrada mediante Query Params (autor, genero) y permite actualizar el estado de disponibilidad.
+Gestiona el catálogo de libros y su disponibilidad. Usa `libro_db` en PostgreSQL para almacenar la información de los libros.
 
 **Endpoints principales:**
 - `GET /api/libros` - Listar todos los libros (con filtros: `?autor=X&genero=Y`)
@@ -44,20 +51,20 @@ Gestiona el catalogo de libros. Expone endpoints para busqueda filtrada mediante
 
 ### 2. Prestamo-Service (Operaciones) - Puerto 3334
 
-Orquesta el proceso de prestamo. Antes de registrar un prestamo, consulta al Libro-Service para verificar la existencia y estado del ejemplar.
+Orquesta el flujo de préstamos y mantiene usuarios autenticados con JWT. Consulta `Libro-Service` antes de registrar un préstamo.
 
 **Auth endpoints:**
 - `POST /api/auth/register` - Registrar usuario
-- `POST /api/auth/login` - Iniciar sesion (devuelve JWT)
+- `POST /api/auth/login` - Iniciar sesión (devuelve JWT)
 - `GET /api/auth/validate` - Validar token JWT
 
 **Prestamo endpoints (requieren JWT):**
-- `GET /api/prestamos` - Listar todos los prestamos
-- `GET /api/prestamos/usuario` - Listar prestamos del usuario autenticado
+- `GET /api/prestamos` - Listar todos los préstamos
+- `GET /api/prestamos/usuario` - Listar préstamos del usuario autenticado
 - `GET /api/prestamos/estado?estado=ACTIVO` - Filtrar por estado
-- `GET /api/prestamos/{id}` - Obtener prestamo por ID
-- `POST /api/prestamos` - Registrar nuevo prestamo
-- `POST /api/prestamos/{id}/devolucion` - Registrar devolucion
+- `GET /api/prestamos/{id}` - Obtener préstamo por ID
+- `POST /api/prestamos` - Registrar nuevo préstamo
+- `POST /api/prestamos/{id}/devolucion` - Registrar devolución
 
 ---
 
