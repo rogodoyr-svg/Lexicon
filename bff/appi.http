@@ -1,0 +1,3 @@
+#Test to health
+
+GET http://localhost:3001/health
