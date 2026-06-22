@@ -30,24 +30,22 @@ Vista de alto nivel: actores externos y el sistema Lexicon como una única caja 
 
 ```mermaid
 ```mermaid
-C4Context
-    title Lexicon — Diagrama de Contexto del Sistema (Nivel 1)
+graph TD
+    %% Estilos
+    classDef person fill:#08427b,stroke:#052e59,color:#fff;
+    classDef system fill:#1168bd,stroke:#0b4884,color:#fff;
+    classDef external fill:#999,stroke:#666,color:#fff;
 
-    Person(lector, "Lector / Usuario Final", "Consulta el catálogo y solicita préstamos de libros")
-    Person(admin, "Personal Administrativo", "Gestiona el inventario de obras y operaciones de devolución")
+    %% Nodos
+    Lector("Lector / Usuario Final"):::person
+    Admin("Personal Administrativo"):::person
+    Lexicon("Ecosistema Lexicon"):::system
+    Docker("Docker Engine"):::external
 
-    System_Boundary(sistema, "Sistema Lexicon") {
-        System(lexicon, "Ecosistema Lexicon", "Plataforma distribuida de gestión de biblioteca basada en microservicios con patrón BFF")
-    }
-
-    System_Ext(docker, "Docker Engine", "Motor de contenedores que virtualiza instancias PostgreSQL aisladas")
-
-    Rel(lector, lexicon, "Consulta catálogo, solicita préstamos", "HTTPS / JSON / JWT")
-    Rel(admin, lexicon, "Registra obras, gestiona devoluciones", "HTTPS / JSON / JWT")
-    Rel(lexicon, docker, "Provisiona bases de datos aisladas", "Docker API")
-
-    UpdateRelStyle(lector, lexicon, $offsetX="-40", $offsetY="-10")
-    UpdateRelStyle(admin, lexicon, $offsetX="40", $offsetY="-10")
+    %% Relaciones
+    Lector -->|Consulta catálogo, solicita préstamos (HTTPS/JWT)| Lexicon
+    Admin -->|Registra obras, gestiona devoluciones (HTTPS/JWT)| Lexicon
+    Lexicon -->|Provisiona bases de datos| Docker
 ```
 
 ---
