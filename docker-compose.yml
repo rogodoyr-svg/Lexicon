@@ -1,0 +1,59 @@
+services:
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: lexicon-auth-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: authuser
+      POSTGRES_PASSWORD: authpass
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-libro:
+    image: postgres:16-alpine
+    container_name: lexicon-libro-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: libro_db
+      POSTGRES_USER: libro_user
+      POSTGRES_PASSWORD: libro_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_libro_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U libro_user -d libro_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-prestamo:
+    image: postgres:16-alpine
+    container_name: lexicon-prestamo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: prestamo_db
+      POSTGRES_USER: prestamo_user
+      POSTGRES_PASSWORD: prestamo_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_prestamo_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prestamo_user -d prestamo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_auth_data:
+  postgres_libro_data:
+  postgres_prestamo_data:
