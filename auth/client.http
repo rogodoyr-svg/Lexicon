@@ -5,8 +5,8 @@ POST {{baseUrl}}/register
 Content-Type: application/json
 
 {
-  "email": "user1@mail.cl",
-  "password": "abcd.1234"
+  "email": "axel@gmail.com",
+  "password": "axel123"
 }
 
 ### Login usuario semilla
@@ -14,6 +14,6 @@ POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "email": "user1@mail.cl",
-  "password": "abcd.1234"
+  "email": "axel@gmail.com",
+  "password": "axel123"
 }

@@ -19,11 +19,10 @@ public class JwtTokenService {
     private final SecretKey signingKey;
 
     public JwtTokenService(@Value("${jwt.secret}") String secret) {
-        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-    
+        this.signingKey = Keys.hmacShaKeyFor(sha256(secret));
     }
 
-    public String extractSubject (String token) {
+    public String extractSubject(String token) {
         Claims claims = Jwts.parser()
             .verifyWith(signingKey)
             .build()
@@ -34,11 +33,11 @@ public class JwtTokenService {
     }
 
     private byte[] sha256(String value) {
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			return digest.digest(value.getBytes(StandardCharsets.UTF_8));
-		} catch (NoSuchAlgorithmException exception) {
-			throw new IllegalStateException("No fue posible inicializar SHA-256", exception);
-		}
-	}
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return digest.digest(value.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("No fue posible inicializar SHA-256", exception);
+        }
+    }
 }

@@ -14,9 +14,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenService jwtTokenService;
@@ -26,31 +25,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-		throws ServletException, IOException {
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return path.equals("/login") || path.equals("/register");
+    }
 
-		String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-		if (authorization == null || !authorization.startsWith("Bearer ")) {
-			filterChain.doFilter(request, response);
-			return;
-		}
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-		String token = authorization.substring(7);
-		try {
-			String subject = jwtTokenService.extractSubject(token);
-			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-				subject,
-				null,
-				Collections.emptyList()
-			);
-			authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-		} catch (JwtException | IllegalArgumentException exception) {
-			SecurityContextHolder.clearContext();
-		}
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-		filterChain.doFilter(request, response);
-	}
+        String token = authorization.substring(7);
+        try {
+            String subject = jwtTokenService.extractSubject(token);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                subject,
+                null,
+                Collections.emptyList()
+            );
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (JwtException | IllegalArgumentException exception) {
+			System.out.println("🚨 ERROR VALIDANDO JWT EN EL BFF: " + exception.getMessage());
+            exception.printStackTrace();
+            SecurityContextHolder.clearContext();
+        }
+
+        filterChain.doFilter(request, response);
+    }
 }
 
     

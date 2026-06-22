@@ -1,11 +1,13 @@
 package com.ms.bff.client;
 
-import com.ms.bff.dto.AuthResponse;
-import com.ms.bff.dto.LoginRequest;
-import com.ms.bff.dto.RegisterRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import com.ms.bff.dto.AuthResponse;
+import com.ms.bff.dto.LoginRequest;
+import com.ms.bff.dto.RegisterRequest;
+
 @Component
 public class AuthClient {
 
@@ -17,21 +19,25 @@ public class AuthClient {
         this.authBaseUrl = authBaseUrl;
     }
 
+    private record BackendAuthBody(String username, String email, String password) {}
+
     public AuthResponse login(LoginRequest request) {
-		return restClient.post()
-			.uri(authBaseUrl + "/login")
-			.body(request)
-			.retrieve()
-			.body(AuthResponse.class);
-	}
+        BackendAuthBody body = new BackendAuthBody(request.email(), request.email(), request.password());
+
+        return restClient.post()
+            .uri(authBaseUrl + "/login")
+            .body(body)
+            .retrieve()
+            .body(AuthResponse.class);
+    }
 
     public AuthResponse register(RegisterRequest request) {
-		return restClient.post()
-			.uri(authBaseUrl + "/register")
-			.body(request)
-			.retrieve()
-			.body(AuthResponse.class);
-	} 
+        BackendAuthBody body = new BackendAuthBody(request.email(), request.email(), request.password());
 
-
+        return restClient.post()
+            .uri(authBaseUrl + "/register")
+            .body(body)
+            .retrieve()
+            .body(AuthResponse.class);
+    }
 }
