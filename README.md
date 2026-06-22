@@ -36,16 +36,19 @@ El ecosistema de software está compuesto por 4 componentes independientes, impl
             Puerto: 5435     Puerto: 5433     Puerto: 5434
               (authdb)        (libro_db)     (prestamo_db)
 
-### Componentes del Ecosistema
+### Componentes del Ecosistema ##
 
 1. **BFF (Backend For Frontend) - Puerto 8080:** Punto único de entrada para las aplicaciones cliente. Centraliza el enrutamiento y aplica un `JwtAuthenticationFilter` para pre-validar la firma de las credenciales de seguridad de manera local utilizando un algoritmo hash `SHA-256` antes de propagar las peticiones a la red interna.
+
 2. **Auth-Service (auth) - Puerto 7778:** Microservicio especializado encargado del registro, login de usuarios y la emisión/firma de tokens criptográficos JWT con hashing de contraseñas mediante `BCrypt`, operando de manera aislada al negocio.
+
 3. **ms-book (Inventario) - Puerto 3333:** Gestiona de forma autónoma el catálogo descriptivo de libros, autores, géneros e ISBN, controlando las existencias físicas y lógicas mediante su propia persistencia.
+
 4. **ms-loan (Operaciones) - Puerto 3334:** Orquesta el ciclo de vida transaccional de los préstamos y devoluciones. Consume síncronamente mediante `RestClient` los endpoints de `ms-book` para validar reglas de negocio en tiempo real antes de consolidar una operación.
 
 ---
 
-## Tecnologías Utilizadas
+## Tecnologías Utilizadas ##
 - **Java 25** con **Spring Boot 4.x** (Spring Security 7.x)
 - **PostgreSQL** virtualizado independientemente mediante Docker (Módulo auth en puerto `5435`)
 - **Flyway** para el control de versiones evolutivo de esquemas de bases de datos
@@ -55,27 +58,27 @@ El ecosistema de software está compuesto por 4 componentes independientes, impl
 
 ---
 
-## Estructura de Endpoints Públicos (Expuestos por el BFF)
+## Estructura de Endpoints Públicos (Expuestos por el BFF) ##
 
 Todas las interacciones desde el cliente externo se realizan exclusivamente a través de la puerta de enlace del BFF (Puerto `8080`):
 
-### Endpoints de Autenticación
+### Endpoints de Autenticación ##
 - `POST http://localhost:8080/register` -> Registro inicial de usuarios.
 - `POST http://localhost:8080/login` -> Inicia sesión (Retorna una estructura `AuthResponse` con el JWT válido).
 - `GET http://localhost:8080/health` -> Validación de estado e infraestructura del BFF (Requiere pasar el JWT en el encabezado `Authorization: Bearer <token>`).
 
-### Endpoints de Catálogo (ms-book)
+### Endpoints de Catálogo (ms-book) ##
 - `GET http://localhost:8080/api/v1/libros` -> Lista el catálogo total (Filtros opcionales: `?autor=X&genero=Y`).
 - `GET http://localhost:8080/api/v1/libros/disponibles` -> Lista exclusivamente obras con existencias lógicas.
 - `POST http://localhost:8080/api/v1/libros` -> Registra una nueva obra. Requiere validación de estructura inmutable `LibroRequestDto`.
 
-### Endpoints de Operaciones (ms-loan - Requieren JWT en el Header)
+### Endpoints de Operaciones (ms-loan - Requieren JWT en el Header) ##
 - `POST http://localhost:8080/api/v1/prestamos` -> Solicita un nuevo préstamo (Cuerpo JSON: `{"libroId": "<UUID>"}`).
 - `POST http://localhost:8080/api/v1/prestamos/{id}/devolucion` -> Registra el retorno físico, actualizando el inventario mediante eventos REST internos.
 
 ---
 
-## Diseño y Estrategia de Persistencia
+## Diseño y Estrategia de Persistencia ##
 Cada base de datos corre de manera aislada en su respectivo contenedor PostgreSQL, administrada secuencialmente por Flyway (`db/migration/`):
 
 - **`authdb` (Puerto 5435):** Almacena credenciales de usuario con contraseñas Hasheadas criptográficamente a nivel de esquema de seguridad.
@@ -84,9 +87,9 @@ Cada base de datos corre de manera aislada en su respectivo contenedor PostgreSQ
 
 ---
 
-## Guía de Inicio Rápido
+## Guía de Inicio Rápido ##
 
-### 1. Inicialización de la Persistencia (Docker)
+### 1. Inicialización de la Persistencia (Docker) ##
 Levanta todos los motores PostgreSQL aislados definidos en la raíz del proyecto:
 ```bash
 docker-compose up -d
