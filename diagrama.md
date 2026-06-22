@@ -29,7 +29,6 @@
 Vista de alto nivel: actores externos y el sistema Lexicon como una única caja negra.
 
 ```mermaid
-```mermaid
 graph TD
     %% Estilos
     classDef person fill:#08427b,stroke:#052e59,color:#fff;
