@@ -436,7 +436,7 @@ erDiagram
     }
 
     USERS_LOAN ||--o{ PRESTAMOS : "solicita"
-    LIBROS ..> PRESTAMOS : "referencia logica (Database-per-Service)"
+    LIBROS .. PRESTAMOS : "referencia logica"
 ```
 
 > **Nota de diseño:** La relación `PRESTAMOS.libro_id → LIBROS.id` es **lógica**, no física. Al adoptar el patrón *Database-per-Service*, no existen claves foráneas cross-base; la integridad referencial se garantiza en tiempo de ejecución mediante la validación síncrona de `ms-loan` contra `ms-book` vía `RestClient`.
