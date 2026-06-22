@@ -394,49 +394,25 @@ Cada microservicio posee su propio esquema de base de datos aislado, gestionado 
 
 ```mermaid
 erDiagram
-    %% ===== authdb (auth-service · Puerto 5435) =====
-    USERS_AUTH {
-        uuid id PK
-        string username UK
-        string password_hash "BCrypt"
-        timestamp created_at
-        timestamp updated_at
+    USERSAUTH {
+        uuid id
+        string username
     }
-
-    %% ===== libro_db (ms-book · Puerto 5433) =====
     LIBROS {
-        uuid id PK
+        uuid id
         string titulo
-        string autor "INDEX"
-        string genero "INDEX"
-        string isbn "INDEX"
-        boolean disponible "INDEX"
-        timestamp created_at
-        timestamp updated_at
     }
-
-    %% ===== prestamo_db (ms-loan · Puerto 5434) =====
-    USERS_LOAN {
-        uuid id PK
-        string username UK "INDEX"
-        string password_hash
-        timestamp created_at
-        timestamp updated_at
+    USERSLOAN {
+        uuid id
+        string username
     }
-
     PRESTAMOS {
-        uuid id PK
-        uuid libro_id "INDEX (referencia lógica, no FK)"
-        string usuario_username "INDEX"
-        timestamp fecha_prestamo
-        timestamp fecha_devolucion
-        string estado "INDEX: ACTIVO | DEVUELTO"
-        timestamp created_at
-        timestamp updated_at
+        uuid id
+        string estado
     }
 
-    USERS_LOAN ||--o{ PRESTAMOS : "solicita"
-    LIBROS .. PRESTAMOS : "referencia logica"
+    USERSLOAN ||--o{ PRESTAMOS : solicita
+    LIBROS ||--o{ PRESTAMOS : refiere
 ```
 
 > **Nota de diseño:** La relación `PRESTAMOS.libro_id → LIBROS.id` es **lógica**, no física. Al adoptar el patrón *Database-per-Service*, no existen claves foráneas cross-base; la integridad referencial se garantiza en tiempo de ejecución mediante la validación síncrona de `ms-loan` contra `ms-book` vía `RestClient`.
