@@ -1,0 +1,19 @@
+@baseUrl = http://localhost:7778
+
+### Registrar usuario semilla (Haz este primero)
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "email": "axel@gmail.com",
+  "password": "axel123"
+}
+
+### Login usuario semilla
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "axel@gmail.com",
+  "password": "axel123"
+}

@@ -1,0 +1,84 @@
+## Archivo para probar los endpoints de auth-service y prestamo-service usando REST Client en VSCode
+@baseUrl = http://localhost:3334/api
+@authUrl = {{baseUrl}}/auth
+@prestamosUrl = {{baseUrl}}/prestamos
+
+# Último Token JWT válido de Axel
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBeGVsIiwiaWF0IjoxNzgyMTQ2NTAzLCJleHAiOjE3ODIxNTAxMDN9.pxaRzm0LUvCsDfRQy52ivFDgvvcxTyVQTi4tjgmJ-Ro
+
+@users = Axel
+
+@libroId = 3977b41b-34db-43bc-a4c2-891e2be9b477
+
+@prestamoId = e973c256-2b4e-401c-9dd5-67c50be9ae6e
+
+### =========================
+###     AUTH ENDPOINTS
+### =========================
+
+### Registrar un nuevo usuario
+POST {{authUrl}}/register
+Content-Type: application/json
+
+{
+  "username": "Axel",
+  "password": "axel123"
+}
+
+### Iniciar sesion
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "username": "Axel",
+  "password": "axel123"
+}
+
+### Validar token JWT
+GET {{authUrl}}/validate
+Authorization: Bearer {{token}}
+
+### Obtener todos los usuarios y sus tokens
+GET {{authUrl}}/users
+Authorization: Bearer {{token}}
+
+### Eliminar un usuario
+DELETE {{authUrl}}/users/pedro
+
+### =========================
+### PRESTAMO-SERVICE ENDPOINTS
+### =========================
+
+### Obtener todos los prestamos
+GET {{prestamosUrl}} 
+Authorization: Bearer {{token}}
+
+### Obtener prestamos del usuario autenticado
+GET {{prestamosUrl}}/usuario
+Authorization: Bearer {{token}}
+
+### Obtener prestamos por estado
+GET {{prestamosUrl}}/estado?estado=ACTIVO
+Authorization: Bearer {{token}}
+
+### Obtener prestamo por ID
+GET {{prestamosUrl}}/{{prestamoId}}
+Authorization: Bearer {{token}}
+
+### Registrar un nuevo prestamo
+POST {{prestamosUrl}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "libroId": "{{libroId}}"
+}
+
+### Devolver un libro
+POST {{prestamosUrl}}/{{prestamoId}}/devolucion
+Authorization: Bearer {{token}}
+
+### Eliminar un prestamo
+DELETE {{prestamosUrl}}/{{prestamoId}}
+Authorization: Bearer {{token}}
+

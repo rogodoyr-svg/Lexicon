@@ -1,0 +1,36 @@
+@baseUrl = http://localhost:8080
+
+### 1. Registrar en el BFF
+POST http://localhost:8080/register
+Content-Type: application/json
+
+{
+  "email": "axel@gmail.com",
+  "password": "axel123"
+}
+
+
+### 🚨 PRUEBA DIRECTA AL MICROSERVICIO DE AUTH (Puerto 7778)
+POST http://localhost:7778/register
+Content-Type: application/json
+
+{
+  "username": "axel@gmail.com",
+  "email": "axel@gmail.com",
+  "password": "axel123"
+}
+
+### 2. Login en el BFF
+POST http://localhost:8080/login
+Content-Type: application/json
+
+{
+  "email": "axel@gmail.com",
+  "password": "axel123"
+}
+
+### 3. Guardar el Token que te devuelva el paso anterior aquí abajo
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJheGVsQGdtYWlsLmNvbSIsImlhdCI6MTc4MjE1MzM1NSwiZXhwIjoxNzgyMjM5NzU1fQ.BdCrLSdIGa71dVNysrIQmI3zJVEi7k4dqP_lHmn-TAI
+### 4. Probar el Health con el Token Fresco
+GET {{baseUrl}}/health
+Authorization: Bearer {{token}}
