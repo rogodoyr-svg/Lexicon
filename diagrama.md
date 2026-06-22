@@ -29,6 +29,7 @@
 Vista de alto nivel: actores externos y el sistema Lexicon como una única caja negra.
 
 ```mermaid
+```mermaid
 C4Context
     title Lexicon — Diagrama de Contexto del Sistema (Nivel 1)
 
@@ -542,4 +543,3 @@ mindmap
 
 ---
 
-> **Cómo visualizar:** GitHub renderiza automáticamente los bloques `mermaid` al abrir este archivo `.md`. Para editar interactivamente, copia cualquier bloque de código Mermaid y pégalo en https://mermaid.live.
