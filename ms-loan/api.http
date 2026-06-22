@@ -2,12 +2,18 @@
 @baseUrl = http://localhost:3334/api
 @authUrl = {{baseUrl}}/auth
 @prestamosUrl = {{baseUrl}}/prestamos
-@users = pedro
 
-@prestamoId = ee2efb5d-5894-4781-b94c-e6343e88b379
+# Último Token JWT válido de Axel
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBeGVsIiwiaWF0IjoxNzgyMTQ2NTAzLCJleHAiOjE3ODIxNTAxMDN9.pxaRzm0LUvCsDfRQy52ivFDgvvcxTyVQTi4tjgmJ-Ro
+
+@users = Axel
+
+@libroId = 3977b41b-34db-43bc-a4c2-891e2be9b477
+
+@prestamoId = e973c256-2b4e-401c-9dd5-67c50be9ae6e
 
 ### =========================
-### AUTH ENDPOINTS
+###     AUTH ENDPOINTS
 ### =========================
 
 ### Registrar un nuevo usuario
@@ -15,8 +21,8 @@ POST {{authUrl}}/register
 Content-Type: application/json
 
 {
-  "username": "pedro",
-  "password": "pedro123"
+  "username": "Axel",
+  "password": "axel123"
 }
 
 ### Iniciar sesion
@@ -24,17 +30,17 @@ POST {{authUrl}}/login
 Content-Type: application/json
 
 {
-  "username": "pedro",
-  "password": "pedro123"
+  "username": "Axel",
+  "password": "axel123"
 }
 
 ### Validar token JWT
 GET {{authUrl}}/validate
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZWRybyIsImlhdCI6MTc3OTkxNTM4MywiZXhwIjoxNzc5OTE4OTgzfQ.MDHPqSIzW4IfXdcobUuFG9ebQQtmUIQd2n15LKne5Uk
+Authorization: Bearer {{token}}
 
 ### Obtener todos los usuarios y sus tokens
 GET {{authUrl}}/users
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyb2RyaWdvIiwiaWF0IjoxNzc5NTc2Nzk0LCJleHAiOjE3Nzk1ODAzOTR9.IkUrgp1u0vkm9DT5cErYLqKRCVd8iGynmb50Vv_kg2A
+Authorization: Bearer {{token}}
 
 ### Eliminar un usuario
 DELETE {{authUrl}}/users/pedro
@@ -45,34 +51,34 @@ DELETE {{authUrl}}/users/pedro
 
 ### Obtener todos los prestamos
 GET {{prestamosUrl}} 
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBeGVsIHJvc2UiLCJpYXQiOjE3Nzk5MTQzNDgsImV4cCI6MTc3OTkxNzk0OH0.LXafDsXcpmPKqJI7-FmVm0yjki8YFY9WxiUy_Fs36QM
+Authorization: Bearer {{token}}
 
 ### Obtener prestamos del usuario autenticado
 GET {{prestamosUrl}}/usuario
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyb2RyaWdvIiwiaWF0IjoxNzc5NTc2Nzk0LCJleHAiOjE3Nzk1ODAzOTR9.IkUrgp1u0vkm9DT5cErYLqKRCVd8iGynmb50Vv_kg2A
+Authorization: Bearer {{token}}
 
 ### Obtener prestamos por estado
 GET {{prestamosUrl}}/estado?estado=ACTIVO
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBeGVsIHJvc2UiLCJpYXQiOjE3Nzk5MTQ0NDEsImV4cCI6MTc3OTkxODA0MX0.UBUzkFrXMd8RW8kFVexTSNziV9KFjpdLOzwQX6IHQPs
+Authorization: Bearer {{token}}
 
 ### Obtener prestamo por ID
 GET {{prestamosUrl}}/{{prestamoId}}
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyb2RyaWdvIiwiaWF0IjoxNzc5NTc2Nzk0LCJleHAiOjE3Nzk1ODAzOTR9.IkUrgp1u0vkm9DT5cErYLqKRCVd8iGynmb50Vv_kg2A
+Authorization: Bearer {{token}}
 
 ### Registrar un nuevo prestamo
 POST {{prestamosUrl}}
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBeGVsIHJvc2UiLCJpYXQiOjE3Nzk5MTQ0NDEsImV4cCI6MTc3OTkxODA0MX0.UBUzkFrXMd8RW8kFVexTSNziV9KFjpdLOzwQX6IHQPs
+Authorization: Bearer {{token}}
 
 {
-  "libroId": "eb47e6e2-9c04-401d-a153-91c7deafe577"
+  "libroId": "{{libroId}}"
 }
 
 ### Devolver un libro
-POST {{prestamosUrl}}/017c2514-ff09-457d-913d-7cad60b91a91/devolucion
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBeGVsIHJvc2UiLCJpYXQiOjE3Nzk5MTQ0NDEsImV4cCI6MTc3OTkxODA0MX0.UBUzkFrXMd8RW8kFVexTSNziV9KFjpdLOzwQX6IHQPs
+POST {{prestamosUrl}}/{{prestamoId}}/devolucion
+Authorization: Bearer {{token}}
 
 ### Eliminar un prestamo
-DELETE {{prestamosUrl}}/017c2514-ff09-457d-913d-7cad60b91a91
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBeGVsIHJvc2UiLCJpYXQiOjE3Nzk5MTQ0NDEsImV4cCI6MTc3OTkxODA0MX0.UBUzkFrXMd8RW8kFVexTSNziV9KFjpdLOzwQX6IHQPs
+DELETE {{prestamosUrl}}/{{prestamoId}}
+Authorization: Bearer {{token}}
 
