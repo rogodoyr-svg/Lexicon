@@ -13,27 +13,28 @@ Para mitigar estas deficiencias, el sistema se ha rediseñado bajo una arquitect
 El ecosistema de software está compuesto por 4 componentes independientes, implementando el patrón *Database-per-Service* para garantizar bajo acoplamiento y alta cohesión:
 
 
-                +------------------------------------------+
-                 |         📱 Aplicación Cliente          |
-                 +----------------------------------------+
-                                     |
-                                     | HTTP / JSON / JWT
-                                     v
-                 +----------------------------------------+
-                 |      🔀 Backend For Frontend (BFF)      |
-                 |             Puerto: 8080               |
-                 +----------------------------------------+
-                           /         |         \
-     /--------------------/          |          \------------------------\
-    v                                v                                   v
-+----------------+           +----------------+                  +----------------+
-|  auth-service  |           |    ms-book     |  <-----------    |    ms-loan     |
-| (Autenticación)|           |  (Inventario)  |      REST        | (Operaciones)  |
-|  Puerto: 7778  |           |  Puerto: 3333  | (Disponibilidad) |  Puerto: 3334  |
-+----------------+           +----------------+                  +----------------+
-        |                               |                               |
-PostgreSQL:5432                 PostgreSQL:5433                 PostgreSQL:5434
-    (auth_db)                      (libro_db)                     (prestamo_db)
+               +----------------------------------+
+               |       📱 Aplicación Cliente      |
+               +----------------------------------+
+                                |
+                                | HTTP / JSON / JWT
+                                v
+               +----------------------------------+
+               |   🔀 Backend For Frontend (BFF)   |
+               |           Puerto: 8080           |
+               +----------------------------------+
+                     /          |          \
+                    /           |           \
+                   v            v            v
+           +--------------+ +--------------+ +--------------+
+           | auth-service | |   ms-book    | |   ms-loan    |
+           | (Seguridad)  | | (Inventario) | | (Operaciones)|
+           | Puerto: 7778 | | Puerto: 3333 | | Puerto: 3334 |
+           +--------------+ +--------------+ +--------------+
+                  |                |                |
+             PostgreSQL       PostgreSQL       PostgreSQL
+            Puerto: 5435     Puerto: 5433     Puerto: 5434
+              (authdb)        (libro_db)     (prestamo_db)
 
 ### Componentes del Ecosistema
 
@@ -43,6 +44,17 @@ PostgreSQL:5432                 PostgreSQL:5433                 PostgreSQL:5434
 4. **ms-loan (Operaciones) - Puerto 3334:** Orquesta el ciclo de vida transaccional de los préstamos y devoluciones. Consume síncronamente mediante `RestClient` los endpoints de `ms-book` para validar reglas de negocio en tiempo real antes de consolidar una operación.
 
 ---
+
+## Tecnologías Utilizadas
+- **Java 25** con **Spring Boot 4.x** (Spring Security 7.x)
+- **PostgreSQL** virtualizado independientemente mediante Docker (Módulo auth en puerto `5435`)
+- **Flyway** para el control de versiones evolutivo de esquemas de bases de datos
+- **JWT (JSON Web Tokens - io.jsonwebtoken)** para el esquema global de seguridad distribuida
+- **Jakarta Validation Constraints** para la validación estricta de DTOs (`@NotBlank`)
+- **Gradle** como sistema avanzado de automatización y construcción
+
+---
+
 ## Estructura de Endpoints Públicos (Expuestos por el BFF)
 
 Todas las interacciones desde el cliente externo se realizan exclusivamente a través de la puerta de enlace del BFF (Puerto `8080`):
@@ -68,7 +80,7 @@ Cada base de datos corre de manera aislada en su respectivo contenedor PostgreSQ
 
 - **`authdb` (Puerto 5435):** Almacena credenciales de usuario con contraseñas Hasheadas criptográficamente a nivel de esquema de seguridad.
 - **`libro_db` (Puerto 5433):** Tabla `libros` optimizada con índices de búsqueda rápida en columnas de alta demanda (`autor`, `genero`, `isbn`, `disponible`).
-- **`prestamo_db` (Puerto 5434):** Administra el histórico relacional mediante scripts de mi gración ordenados e índices de auditoría en el estado de las transacciones.
+- **`prestamo_db` (Puerto 5434):** Administra el histórico relacional mediante scripts de migración ordenados e índices de auditoría en el estado de las transacciones.
 
 ---
 
@@ -94,32 +106,23 @@ cd ../ms-loan && ./gradlew bootRun
 # Iniciar Puerta de Enlace BFF (Puerto 8080)
 cd ../bff && ./gradlew bootRun
 
-
 ---
 
-## Base de Datos
-
+Base de Datos
 Cada servicio cuenta con su propia persistencia en PostgreSQL, gestionada mediante migraciones de Flyway para asegurar que el esquema sea reproducible en cualquier entorno.
 
-### Libro-Service (libro_db)
-- Tabla `libros`: id, titulo, autor, genero, isbn, disponible, created_at, updated_at
-- Indices en: autor, genero, isbn, disponible
+ms-book (libro_db)
+- Tabla libros: id, titulo, autor, genero, isbn, disponible, created_at, updated_at
+- Índices en: autor, genero, isbn, disponible
 
-### Prestamo-Service (prestamo_db)
-- Tabla `users`: id, username, password_hash, created_at, updated_at
-- Tabla `prestamos`: id, libro_id, usuario_username, fecha_prestamo, fecha_devolucion, estado, created_at, updated_at
-- Indices en: usuario, estado, libro_id
+ms-loan (prestamo_db)
+Tabla users: id, username, password_hash, created_at, updated_at
 
----
+- Tabla prestamos: id, libro_id, usuario_username, fecha_prestamo, fecha_devolucion, estado, created_at, updated_at
+- Índices en: usuario, estado, libro_id
 
-## Tests
+Tests
+Ambos servicios incluyen tests unitarios e integración:
 
-Ambos servicios incluyen tests unitarios e integracion:
-
-```bash
-cd libro-service
-./gradlew test
-
-cd prestamo-service
-./gradlew test
-```
+- cd ms-book ./gradlew test
+- cd ../ms-loan ./gradlew test
