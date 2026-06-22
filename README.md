@@ -1,150 +1,99 @@
-# Lexicon - Sistema de Gestion de Biblioteca
+# Lexicon - Sistema de Gestión de Biblioteca (Arquitectura Distribuidora con BFF)
 
 ## Contexto del Proyecto
+La Biblioteca Central enfrenta un problema histórico de saturación y degradación de rendimiento en su infraestructura tecnológica. Al operar bajo un sistema monolítico antiguo, las cargas masivas o actualizaciones en el inventario por parte del personal administrativo ralentizaban críticamente el módulo de préstamos, afectando la experiencia de cara al usuario final. Adicionalmente, la falta de sincronización en tiempo real permitía el préstamo lógico de libros que físicamente ya no se encontraban disponibles, generando desorden administrativo y reclamos continuos.
 
-La Biblioteca Central enfrenta un problema de saturacion en su sistema actual. Al ser un sistema monolitico antiguo, cada vez que el departamento de inventario carga nuevos libros, el sistema de prestamos se vuelve lento, afectando la experiencia del usuario final. Ademas, existe una falta de sincronizacion real: se prestan libros que el sistema reporta como "disponibles" pero que fisicamente ya han salido, generando reclamos y desorden administrativo.
-
-## Propuesta de solucion (MVP)
-
-Para mitigar estas deficiencias, se ha diseñado una arquitectura distribuida y desacoplada basada en microservicios especializados para el negocio. La solución aísla las cargas transaccionales, se protege mediante un Servicio de Autenticación dedicado (auth) y expone sus recursos a las aplicaciones clientes de forma segura y unificada a través de un componente BFF (Backend For Frontend). Esto elimina la contención de recursos en las bases de datos y encapsula la complejidad interna del ecosistema distribuido.  
-
+## Solución Propuesta (Nueva Arquitectura)
+Para mitigar estas deficiencias, el sistema se ha rediseñado bajo una arquitectura de microservicios acoplada a un patrón **BFF (Backend For Frontend)** que centraliza la entrada de peticiones, aislando por completo la red interna de microservicios y protegiendo el ecosistema mediante tokens criptográficos **JWT**.
 
 ---
 
-## Arquitectura
+## Arquitectura del Sistema
 
-El sistema está compuesto por dos microservicios independientes, cada uno con su propio `docker-compose.yml` y su propia base de datos PostgreSQL.
+El ecosistema de software está compuesto por 4 componentes independientes, implementando el patrón *Database-per-Service* para garantizar bajo acoplamiento y alta cohesión:
 
-```
-+------------------+          +---------------------+
-|   Libro-Service  | <------  |  Prestamo-Service   |
-|   (Inventario)   |  REST    |  (Operaciones)      |
-|   Puerto: 3333   |          |  Puerto: 3334       |
-+------------------+          +---------------------+
-       |                              |
-  PostgreSQL:5433              PostgreSQL:5434
-  (libro_db)                   (prestamo_db)
-```
 
-- `libro-service/docker-compose.yml` define `postgresLibro` en el puerto local `5433`.
-- `prestamo-service/docker-compose.yml` define `postgresPrestamo` en el puerto local `5434`.
-- `Prestamo-Service` consume `Libro-Service` por REST para validar disponibilidad y actualizar estado.
-- Cada servicio es autónomo en su lógica y persistencia, lo que facilita el mantenimiento y el despliegue independiente.
+                +------------------------------------------+
+                 |         📱 Aplicación Cliente          |
+                 +----------------------------------------+
+                                     |
+                                     | HTTP / JSON / JWT
+                                     v
+                 +----------------------------------------+
+                 |      🔀 Backend For Frontend (BFF)      |
+                 |             Puerto: 8080               |
+                 +----------------------------------------+
+                           /         |         \
+     /--------------------/          |          \------------------------\
+    v                                v                                   v
++----------------+           +----------------+                  +----------------+
+|  auth-service  |           |    ms-book     |  <-----------    |    ms-loan     |
+| (Autenticación)|           |  (Inventario)  |      REST        | (Operaciones)  |
+|  Puerto: 7778  |           |  Puerto: 3333  | (Disponibilidad) |  Puerto: 3334  |
++----------------+           +----------------+                  +----------------+
+        |                               |                               |
+PostgreSQL:5432                 PostgreSQL:5433                 PostgreSQL:5434
+    (auth_db)                      (libro_db)                     (prestamo_db)
+
+### Componentes del Ecosistema
+
+1. **BFF (Backend For Frontend) - Puerto 8080:** Punto único de entrada para las aplicaciones cliente. Centraliza el enrutamiento y aplica un `JwtAuthenticationFilter` para pre-validar la firma de las credenciales de seguridad de manera local utilizando un algoritmo hash `SHA-256` antes de propagar las peticiones a la red interna.
+2. **Auth-Service (auth) - Puerto 7778:** Microservicio especializado encargado del registro, login de usuarios y la emisión/firma de tokens criptográficos JWT con hashing de contraseñas mediante `BCrypt`, operando de manera aislada al negocio.
+3. **ms-book (Inventario) - Puerto 3333:** Gestiona de forma autónoma el catálogo descriptivo de libros, autores, géneros e ISBN, controlando las existencias físicas y lógicas mediante su propia persistencia.
+4. **ms-loan (Operaciones) - Puerto 3334:** Orquesta el ciclo de vida transaccional de los préstamos y devoluciones. Consume síncronamente mediante `RestClient` los endpoints de `ms-book` para validar reglas de negocio en tiempo real antes de consolidar una operación.
+
+---
+## Estructura de Endpoints Públicos (Expuestos por el BFF)
+
+Todas las interacciones desde el cliente externo se realizan exclusivamente a través de la puerta de enlace del BFF (Puerto `8080`):
+
+### Endpoints de Autenticación
+- `POST http://localhost:8080/register` -> Registro inicial de usuarios.
+- `POST http://localhost:8080/login` -> Inicia sesión (Retorna una estructura `AuthResponse` con el JWT válido).
+- `GET http://localhost:8080/health` -> Validación de estado e infraestructura del BFF (Requiere pasar el JWT en el encabezado `Authorization: Bearer <token>`).
+
+### Endpoints de Catálogo (ms-book)
+- `GET http://localhost:8080/api/v1/libros` -> Lista el catálogo total (Filtros opcionales: `?autor=X&genero=Y`).
+- `GET http://localhost:8080/api/v1/libros/disponibles` -> Lista exclusivamente obras con existencias lógicas.
+- `POST http://localhost:8080/api/v1/libros` -> Registra una nueva obra. Requiere validación de estructura inmutable `LibroRequestDto`.
+
+### Endpoints de Operaciones (ms-loan - Requieren JWT en el Header)
+- `POST http://localhost:8080/api/v1/prestamos` -> Solicita un nuevo préstamo (Cuerpo JSON: `{"libroId": "<UUID>"}`).
+- `POST http://localhost:8080/api/v1/prestamos/{id}/devolucion` -> Registra el retorno físico, actualizando el inventario mediante eventos REST internos.
 
 ---
 
-## Componentes
+## Diseño y Estrategia de Persistencia
+Cada base de datos corre de manera aislada en su respectivo contenedor PostgreSQL, administrada secuencialmente por Flyway (`db/migration/`):
 
-### 1. Libro-Service (Inventario) - Puerto 3333
-
-Gestiona el catálogo de libros y su disponibilidad. Usa `libro_db` en PostgreSQL para almacenar la información de los libros.
-
-**Endpoints principales:**
-- `GET /api/libros` - Listar todos los libros (con filtros: `?autor=X&genero=Y`)
-- `GET /api/libros/disponibles` - Listar solo libros disponibles
-- `GET /api/libros/{id}` - Obtener libro por ID
-- `GET /api/libros/isbn/{isbn}` - Obtener libro por ISBN
-- `POST /api/libros` - Crear nuevo libro
-- `PUT /api/libros/{id}` - Actualizar libro
-- `DELETE /api/libros/{id}` - Eliminar libro
-- `PATCH /api/libros/{id}/disponibilidad?disponible=false` - Cambiar disponibilidad
-- `GET /api/libros/{id}/disponibilidad` - Verificar disponibilidad
-
-### 2. Prestamo-Service (Operaciones) - Puerto 3334
-
-Orquesta el flujo de préstamos y mantiene usuarios autenticados con JWT. Consulta `Libro-Service` antes de registrar un préstamo.
-
-**Auth endpoints:**
-- `POST /api/auth/register` - Registrar usuario
-- `POST /api/auth/login` - Iniciar sesión (devuelve JWT)
-- `GET /api/auth/validate` - Validar token JWT
-
-**Prestamo endpoints (requieren JWT):**
-- `GET /api/prestamos` - Listar todos los préstamos
-- `GET /api/prestamos/usuario` - Listar préstamos del usuario autenticado
-- `GET /api/prestamos/estado?estado=ACTIVO` - Filtrar por estado
-- `GET /api/prestamos/{id}` - Obtener préstamo por ID
-- `POST /api/prestamos` - Registrar nuevo préstamo
-- `POST /api/prestamos/{id}/devolucion` - Registrar devolución
-
-**ms-books endpoints:**
-- `GET /api/v1/libros` - Listar catalogo completo
-- `GET /api/v1/libros/disponibles` - Retorna exclusivamente los ejemplares que cuentan con existencias logicas en el inventario
-- `GET /api/v1/libros/{id}/disponiblidad` - Endpoint interno y externo utilizado para verificar si un ID especifico está apto para préstamo.
-- `POST /api/v1/libros` - Crear un nuevo libro
-
-**ms-loan endpoints:**
-- `POST /api/v1/prestamos` - Registrar un prestamo tras validar con el modulo de libros
-- `POST /api/v1/prestamos/{id}/devolucion` - Cierre de transaccion y liberacion del libro.
-
-  
----
-
-## Tecnologias
-
-- **Java 25** con **Spring Boot 4.0.6**
-- **PostgreSQL 16** (Docker)
-- **Flyway** para migraciones de base de datos
-- **Spring Security** + **JWT** (jjwt 0.11.5) para autenticacion
-- **Lombok** para reduccion de codigo repetitivo
-- **Gradle** como sistema de build
-- **RestClient** para comunicacion sincrona entre servicios
-- **BFF / API Gateway** Spring Cloud Gateway para el enrutamiento reactivo y eficiente de las peticiones
+- **`authdb` (Puerto 5435):** Almacena credenciales de usuario con contraseñas Hasheadas criptográficamente a nivel de esquema de seguridad.
+- **`libro_db` (Puerto 5433):** Tabla `libros` optimizada con índices de búsqueda rápida en columnas de alta demanda (`autor`, `genero`, `isbn`, `disponible`).
+- **`prestamo_db` (Puerto 5434):** Administra el histórico relacional mediante scripts de mi gración ordenados e índices de auditoría en el estado de las transacciones.
 
 ---
 
-## Inicio Rapido
+## Guía de Inicio Rápido
 
-### 1. Levantar las bases de datos
-
+### 1. Inicialización de la Persistencia (Docker)
+Levanta todos los motores PostgreSQL aislados definidos en la raíz del proyecto:
 ```bash
 docker-compose up -d
-```
 
-### 2. Iniciar Libro-Service
+2. Despliegue Secuencial de Servicios
+Ejecuta los siguientes comandos en terminales independientes de VS Code para inicializar el ecosistema backend:
 
-```bash
-cd libro-service
-./gradlew bootRun
-```
+# Iniciar Componente de Autenticación (Puerto 7778)
+cd auth && ./gradlew bootRun
 
-### 3. Iniciar Prestamo-Service
+# Iniciar Microservicio de Inventario (Puerto 3333)
+cd ../ms-book && ./gradlew bootRun
 
-```bash
-cd prestamo-service
-./gradlew bootRun
-```
+# Iniciar Microservicio de Operaciones (Puerto 3334)
+cd ../ms-loan && ./gradlew bootRun
 
-### 4. Probar con los archivos `.http`
+# Iniciar Puerta de Enlace BFF (Puerto 8080)
+cd ../bff && ./gradlew bootRun
 
-Los archivos `api.http` de cada servicio contienen todas las peticiones de ejemplo listas para ejecutar en IntelliJ IDEA o VS Code con la extension REST Client.
-
----
-
-## Ejemplo de Flujo Completo
-
-```
-1. Registrar usuario:
-   POST /api/auth/register  { "username": "juan", "password": "1234" }
-
-2. Iniciar sesion:
-   POST /api/auth/login     { "username": "juan", "password": "1234" }
-   -> Obtiene JWT token
-
-3. Crear libro (Libro-Service):
-   POST /api/libros         { "titulo": "Don Quijote", "autor": "Cervantes", "genero": "Clasico", "isbn": "978-1-23-456789-7" }
-
-4. Registrar prestamo (Prestamo-Service con JWT):
-   POST /api/prestamos      { "libroId": "<uuid>" }
-   -> Verifica disponibilidad via Libro-Service
-   -> Registra prestamo
-   -> Actualiza disponibilidad a false
-
-5. Devolver libro:
-   POST /api/prestamos/<id>/devolucion
-   -> Actualiza estado a DEVUELTO
-   -> Actualiza disponibilidad a true en Libro-Service
-```
 
 ---
 
